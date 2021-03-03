@@ -13,7 +13,6 @@
 		FC92726925EFD1AE006B4BBC /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FC92726725EFD1AE006B4BBC /* Main.storyboard */; };
 		FC92726B25EFD1AF006B4BBC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FC92726A25EFD1AF006B4BBC /* Assets.xcassets */; };
 		FC92726E25EFD1AF006B4BBC /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FC92726C25EFD1AF006B4BBC /* LaunchScreen.storyboard */; };
-		FC92727725EFD6F9006B4BBC /* OrbitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC92727625EFD6F9006B4BBC /* OrbitViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,7 +24,6 @@
 		FC92726A25EFD1AF006B4BBC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FC92726D25EFD1AF006B4BBC /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		FC92726F25EFD1AF006B4BBC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		FC92727625EFD6F9006B4BBC /* OrbitViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbitViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,7 +59,6 @@
 				FC92726125EFD1AE006B4BBC /* AppDelegate.swift */,
 				FC92726325EFD1AE006B4BBC /* SceneDelegate.swift */,
 				FC92726525EFD1AE006B4BBC /* ViewController.swift */,
-				FC92727625EFD6F9006B4BBC /* OrbitViewController.swift */,
 				FC92726725EFD1AE006B4BBC /* Main.storyboard */,
 				FC92726A25EFD1AF006B4BBC /* Assets.xcassets */,
 				FC92726C25EFD1AF006B4BBC /* LaunchScreen.storyboard */,
@@ -143,7 +140,6 @@
 				FC92726625EFD1AE006B4BBC /* ViewController.swift in Sources */,
 				FC92726225EFD1AE006B4BBC /* AppDelegate.swift in Sources */,
 				FC92726425EFD1AE006B4BBC /* SceneDelegate.swift in Sources */,
-				FC92727725EFD6F9006B4BBC /* OrbitViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -9,31 +9,32 @@ import UIKit
 
 class ViewController: UIViewController {
 
-	let numMoons: Int = 12
+	let numDiscs: Int = 12
 	
-	let planetRadius: CGFloat = 80
-	lazy var moonPathRadius: CGFloat = planetRadius * 1.75
+	let initialDiscRadius: CGFloat = 80
+	var initialDiscCenter: CGPoint = .zero
+	lazy var discPathRadius: CGFloat = initialDiscRadius * 1.75
 	let firstScale: CGFloat = 0.60
 	
-	var moonViews: [RoundView] = []
-	var activeMoon: RoundView!
+	var discViews: [DiscView] = []
+	var activeDisc: DiscView!
 
 	var animator = UIViewPropertyAnimator()
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		
-		for i in 1...numMoons {
-			let v = RoundView()
+		for i in 1...numDiscs {
+			let v = DiscView()
 			v.label.text = "\(i)"
 			view.addSubview(v)
-			moonViews.append(v)
+			discViews.append(v)
 		}
 
-		guard let v = moonViews.last else {
-			fatalError("We didn't add any Moons!")
+		guard let v = discViews.last else {
+			fatalError("We didn't add any Discs!")
 		}
-		activeMoon = v
+		activeDisc = v
 		
 		let panRecognizer = UIPanGestureRecognizer(target:self, action:#selector(detectPan))
 		view.addGestureRecognizer(panRecognizer)
@@ -42,59 +43,52 @@ class ViewController: UIViewController {
 
 	override func viewDidLayoutSubviews() {
 		super.viewDidLayoutSubviews()
-		if moonViews.first?.frame.origin.x == 0 {
-			planetCenter = view.center
-			moonViews.forEach { moon in
-				moon.frame = CGRect(origin: .zero, size: CGSize(width: planetRadius * 2.0, height: planetRadius * 2.0))
-				moon.center = planetCenter
+		if discViews.first?.frame.origin.x == 0 {
+			initialDiscCenter = view.center
+			discViews.forEach { disc in
+				disc.frame = CGRect(origin: .zero, size: CGSize(width: initialDiscRadius * 2.0, height: initialDiscRadius * 2.0))
+				disc.center = initialDiscCenter
 			}
 		}
 	}
 	
-	var planetCenter: CGPoint = .zero
-	var startPos: CGPoint = .zero
-	
 	@objc func detectPan(_ recognizer: UIPanGestureRecognizer) {
-		guard let idx = moonViews.firstIndex(of: activeMoon),
+		guard let idx = discViews.firstIndex(of: activeDisc),
 			  idx > 0
 		else {
 			return
 		}
 		switch recognizer.state {
 		case .began:
-			startPos = activeMoon.center
+			let startPos = activeDisc.center
 			animator = UIViewPropertyAnimator(duration: 0.3, curve: .linear)
 			animator.addAnimations {
-				self.activeMoon.center.y = self.startPos.y + self.moonPathRadius
-				self.activeMoon.transform = CGAffineTransform(scaleX: self.firstScale, y: self.firstScale)
-				self.activeMoon.currentScale = self.firstScale
+				self.activeDisc.center.y = startPos.y + self.discPathRadius
+				self.activeDisc.transform = CGAffineTransform(scaleX: self.firstScale, y: self.firstScale)
 			}
 			var nextIDX = idx + 1
 			var spacing: Double = 42.0
 			var newScale: CGFloat = firstScale
-			while nextIDX < moonViews.count {
-				let nextMoon = moonViews[nextIDX]
+			var startAngle: Double = 450.0 //nextDisc.currentAngle
+			while nextIDX < discViews.count {
+				let nextDisc = discViews[nextIDX]
 					
 				animator.addAnimations {
 					UIView.animateKeyframes(withDuration: 0.3, delay: 0.0, animations: {
-						var startAngle: Double = 450.0 //nextMoon.currentAngle
 						let endAngle: Double = startAngle - spacing
-						print(spacing, startAngle, endAngle)
-						let incAngle: Double = (startAngle - endAngle) / Double(self.moonPathRadius)
-						//let newScale: CGFloat = nextMoon.currentScale - 0.04
-						for i in 1...Int(self.moonPathRadius) {
+						let incAngle: Double = (startAngle - endAngle) / Double(self.discPathRadius)
+						newScale -= 0.04
+						for i in 1...Int(self.discPathRadius) {
 							startAngle -= incAngle
-							let p = CGPoint.pointOnCircle(center: self.planetCenter, radius: self.moonPathRadius, angle: CGFloat(startAngle.degreesToRadians))
-							let duration = 1.0 / Double(self.moonPathRadius)
+							let p = CGPoint.pointOnCircle(center: self.initialDiscCenter, radius: self.discPathRadius, angle: CGFloat(startAngle.degreesToRadians))
+							let duration = 1.0 / Double(self.discPathRadius)
 							let startTime = duration * Double(i)
 							UIView.addKeyframe(withRelativeStartTime: startTime, relativeDuration: duration) {
-								nextMoon.center = p
+								nextDisc.center = p
 								
 							}
 						}
-						nextMoon.transform = CGAffineTransform(scaleX: newScale, y: newScale)
-						nextMoon.currentAngle = endAngle
-						nextMoon.currentScale = newScale
+						nextDisc.transform = CGAffineTransform(scaleX: newScale, y: newScale)
 					})
 					spacing *= 0.925
 				}
@@ -102,26 +96,14 @@ class ViewController: UIViewController {
 				nextIDX += 1
 			}
 			animator.addCompletion({ b in
-				var nextIDX = idx + 1
-				while nextIDX < self.moonViews.count {
-					let nextMoon = self.moonViews[nextIDX]
-					if b == .end {
-						nextMoon.previousAngle = nextMoon.currentAngle
-						nextMoon.previousScale = nextMoon.currentScale
-					} else {
-						nextMoon.currentAngle = nextMoon.previousAngle
-						nextMoon.currentScale = nextMoon.previousScale
-					}
-					nextIDX += 1
-				}
 				if b == .end {
-					self.activeMoon = self.moonViews[idx - 1]
+					self.activeDisc = self.discViews[idx - 1]
 				}
 			})
 			animator.startAnimation()
 			animator.pauseAnimation()
 		case .changed:
-			animator.fractionComplete = recognizer.translation(in: self.view).y / moonPathRadius
+			animator.fractionComplete = recognizer.translation(in: self.view).y / discPathRadius
 		case .ended:
 			if animator.fractionComplete < 0.5 {
 				animator.isReversed = true
@@ -134,13 +116,7 @@ class ViewController: UIViewController {
 
 }
 
-class RoundView: UIView {
-	
-	var currentAngle: Double = 450.0
-	var currentScale: CGFloat = 1.0
-	
-	var previousAngle: Double = 450.0
-	var previousScale: CGFloat = 1.0
+class DiscView: UIView {
 	
 	let label = UILabel()
 	
@@ -173,81 +149,12 @@ class RoundView: UIView {
 	
 }
 
-
-class selfRoundView: UIView {
-	
-	let label = UILabel()
-	
-	override init(frame: CGRect) {
-		super.init(frame: frame)
-		commonInit()
-	}
-	required init?(coder: NSCoder) {
-		super.init(coder: coder)
-		commonInit()
-	}
-	func commonInit() -> Void {
-		backgroundColor = .systemBlue
-		label.translatesAutoresizingMaskIntoConstraints = false
-		label.textColor = .white
-		addSubview(label)
-		NSLayoutConstraint.activate([
-			label.centerXAnchor.constraint(equalTo: centerXAnchor),
-			label.centerYAnchor.constraint(equalTo: centerYAnchor),
-		])
-		layer.borderWidth = 1
-		layer.borderColor = UIColor.blue.cgColor
-		
-		let panRecognizer = UIPanGestureRecognizer(target:self, action:#selector(detectPan))
-		addGestureRecognizer(panRecognizer)
-	}
-	
-	override func layoutSubviews() {
-		super.layoutSubviews()
-		layer.cornerRadius = bounds.width * 0.5
-	}
-	
-	var startPos: CGPoint = .zero
-	var maxDistance: CGFloat = 0
-	var minScale: CGFloat = 0.3
-	
-	@objc func detectPan(_ recognizer:UIPanGestureRecognizer) {
-		let translation  = recognizer.translation(in: self.superview)
-		switch recognizer.state {
-		case .began:
-			startPos = self.center
-			maxDistance = bounds.height
-			
-		case .changed:
-			let newY = max(0.0, min(maxDistance, translation.y))
-			self.center.y = startPos.y + newY
-			let sc = 1.0 - minScale * newY / maxDistance
-			self.transform = CGAffineTransform(scaleX: sc, y: sc)
-			
-		default:
-			()
-		}
-	}
-	
-}
-
 extension CGPoint {
-	
 	static func pointOnCircle(center: CGPoint, radius: CGFloat, angle: CGFloat) -> CGPoint {
 		let x = center.x + radius * cos(angle)
 		let y = center.y + radius * sin(angle)
 		return CGPoint(x: x, y: y)
 	}
-	
-}
-
-extension BinaryInteger {
-	var degreesToRadians: CGFloat { CGFloat(self) * .pi / 180 }
-}
-
-extension FloatingPoint {
-	var degreesToRadians: Self { self * .pi / 180 }
-	var radiansToDegrees: Self { self * 180 / .pi }
 }
 extension Double {
 	var degreesToRadians: Self { self * .pi / 180 }
