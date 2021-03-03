@@ -38,24 +38,79 @@ class ViewController: UIViewController {
 	override func viewDidLayoutSubviews() {
 		super.viewDidLayoutSubviews()
 		if moonViews.first?.frame.origin.x == 0 {
+			planetCenter = view.center
 			moonViews.forEach { moon in
 				moon.frame = CGRect(origin: .zero, size: CGSize(width: planetDiameter, height: planetDiameter))
-				moon.center = view.center
+				moon.center = planetCenter
 			}
 		}
 	}
 	
+	var planetCenter: CGPoint = .zero
 	var idx: Int = 0
 	var startPos: CGPoint = .zero
 	var maxDistance: CGFloat = 0
 	var minScale: CGFloat = 0.7
 	
-	@objc func detectPan(_ recognizer:UIPanGestureRecognizer) {
+	@objc func detectPan(_ recognizer: UIPanGestureRecognizer) {
+		switch recognizer.state {
+		case .began:
+			startPos = activeMoon.center
+			maxDistance = activeMoon.frame.height
+			var nextMoon: RoundView?
+			if idx < moonViews.count - 1 {
+				nextMoon = moonViews[idx + 1]
+			}
+			animator = UIViewPropertyAnimator(duration: 0.3, curve: .linear)
+			animator.addAnimations {
+				self.activeMoon.center.y = self.startPos.y + self.maxDistance
+				self.activeMoon.transform = CGAffineTransform(scaleX: self.minScale, y: self.minScale)
+
+			}
+			if let v = nextMoon {
+				animator.addAnimations {
+					UIView.animateKeyframes(withDuration: 0.3, delay: 0.0, animations: {
+						
+						var startAngle: CGFloat = .pi * 2.5
+						var endAngle: CGFloat =  .pi * 2.0
+						let incAngle = (startAngle - endAngle) / self.maxDistance
+						for i in 1...Int(self.maxDistance) {
+							startAngle -= incAngle
+							let p = CGPoint.pointOnCircle(center: self.planetCenter, radius: self.planetDiameter, angle: startAngle)
+							let duration = 1.0 / Double(self.maxDistance)
+							let startTime = duration * Double(i)
+							UIView.addKeyframe(withRelativeStartTime: startTime, relativeDuration: duration) {
+								v.center = p
+								
+							}
+						}
+						v.transform = CGAffineTransform(scaleX: 0.5, y: 0.5)
+						
+					})
+				}
+			}
+			animator.addCompletion({ b in
+				self.idx -= 1
+				self.activeMoon = self.moonViews[self.idx]
+			})
+			animator.startAnimation()
+			animator.pauseAnimation()
+		case .changed:
+			animator.fractionComplete = recognizer.translation(in: self.view).y / maxDistance
+		case .ended:
+			animator.continueAnimation(withTimingParameters: nil, durationFactor: 0)
+		default:
+			()
+		}
+	}
+
+	@objc func xdetectPan(_ recognizer:UIPanGestureRecognizer) {
 		let translation  = recognizer.translation(in: self.view)
 		switch recognizer.state {
 		case .began:
 			startPos = activeMoon.center
 			maxDistance = activeMoon.frame.height
+			
 			
 		case .changed:
 			let newY = max(0.0, min(maxDistance, translation.y))
