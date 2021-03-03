@@ -13,6 +13,10 @@
 		FC92726925EFD1AE006B4BBC /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FC92726725EFD1AE006B4BBC /* Main.storyboard */; };
 		FC92726B25EFD1AF006B4BBC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FC92726A25EFD1AF006B4BBC /* Assets.xcassets */; };
 		FC92726E25EFD1AF006B4BBC /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FC92726C25EFD1AF006B4BBC /* LaunchScreen.storyboard */; };
+		FC92727C25F015EB006B4BBC /* DiscView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC92727B25F015EB006B4BBC /* DiscView.swift */; };
+		FC92727F25F0160D006B4BBC /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC92727E25F0160D006B4BBC /* Extensions.swift */; };
+		FC92728225F02BBE006B4BBC /* OrbitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC92728125F02BBE006B4BBC /* OrbitViewController.swift */; };
+		FC92728525F03F7B006B4BBC /* OrbitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC92728425F03F7B006B4BBC /* OrbitView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +28,10 @@
 		FC92726A25EFD1AF006B4BBC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FC92726D25EFD1AF006B4BBC /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		FC92726F25EFD1AF006B4BBC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FC92727B25F015EB006B4BBC /* DiscView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscView.swift; sourceTree = "<group>"; };
+		FC92727E25F0160D006B4BBC /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		FC92728125F02BBE006B4BBC /* OrbitViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbitViewController.swift; sourceTree = "<group>"; };
+		FC92728425F03F7B006B4BBC /* OrbitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbitView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +67,10 @@
 				FC92726125EFD1AE006B4BBC /* AppDelegate.swift */,
 				FC92726325EFD1AE006B4BBC /* SceneDelegate.swift */,
 				FC92726525EFD1AE006B4BBC /* ViewController.swift */,
+				FC92728125F02BBE006B4BBC /* OrbitViewController.swift */,
+				FC92728425F03F7B006B4BBC /* OrbitView.swift */,
+				FC92727B25F015EB006B4BBC /* DiscView.swift */,
+				FC92727E25F0160D006B4BBC /* Extensions.swift */,
 				FC92726725EFD1AE006B4BBC /* Main.storyboard */,
 				FC92726A25EFD1AF006B4BBC /* Assets.xcassets */,
 				FC92726C25EFD1AF006B4BBC /* LaunchScreen.storyboard */,
@@ -137,9 +149,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FC92728525F03F7B006B4BBC /* OrbitView.swift in Sources */,
+				FC92727F25F0160D006B4BBC /* Extensions.swift in Sources */,
 				FC92726625EFD1AE006B4BBC /* ViewController.swift in Sources */,
 				FC92726225EFD1AE006B4BBC /* AppDelegate.swift in Sources */,
 				FC92726425EFD1AE006B4BBC /* SceneDelegate.swift in Sources */,
+				FC92727C25F015EB006B4BBC /* DiscView.swift in Sources */,
+				FC92728225F02BBE006B4BBC /* OrbitViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
