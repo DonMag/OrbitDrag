@@ -31,7 +31,8 @@ class OrbitView: UIView {
 		//	(or when forced by numDiscs being set)
 		if bounds.width != thisWidth {
 			thisWidth = bounds.width
-			// "center disc" radius of width * 0.2 will allow all discs to fit
+			// assuming we're a 1:1 ratio view
+			//  using "center disc" radius of width * 0.2 will allow all discs to fit
 			centerDiscRadius = bounds.width * 0.2
 			// radius for "orbit" path
 			discPathRadius = centerDiscRadius * 1.75
@@ -75,6 +76,7 @@ class OrbitView: UIView {
 
 	// "center disc" radius, set in layoutSubviews
 	private var centerDiscRadius: CGFloat = 0
+	
 	// radius for "orbit" path, set in layoutSubviews
 	private var discPathRadius: CGFloat = 0
 	
@@ -107,7 +109,7 @@ class OrbitView: UIView {
 			isDragging = true
 			
 			// starting position of disc to drag
-			let startPos = activeDisc.center
+			let startPosY = activeDisc.center.y
 			
 			// create new animator
 			animator = UIViewPropertyAnimator(duration: 0.3, curve: .linear)
@@ -115,7 +117,7 @@ class OrbitView: UIView {
 			// we're moving activeDisc only vertically
 			//	and scaling down from 1.0 to first scale size
 			animator.addAnimations {
-				self.activeDisc.center.y = startPos.y + self.discPathRadius
+				self.activeDisc.center.y = startPosY + self.discPathRadius
 				self.activeDisc.transform = CGAffineTransform(scaleX: self.firstScale, y: self.firstScale)
 			}
 			// handle discs that have already been dragged off the center
@@ -128,6 +130,8 @@ class OrbitView: UIView {
 			var spacingDegrees: Double = 42.0
 			// starting point: 90 degrees
 			var startDegrees: Double = 90.0
+			// ending point
+			var endDegrees: Double = 0
 			// we need the same number of keyframes as points for the vertical drag
 			let numSteps: CGFloat = discPathRadius
 			while nextIDX < discViews.count {
@@ -135,10 +139,8 @@ class OrbitView: UIView {
 				let nextDisc = discViews[nextIDX]
 				animator.addAnimations {
 					UIView.animateKeyframes(withDuration: 0.3, delay: 0.0, animations: {
-						let endDegrees: Double = startDegrees - spacingDegrees
+						endDegrees = startDegrees - spacingDegrees
 						let stepDegrees: Double = (startDegrees - endDegrees) / Double(numSteps)
-						// decrease scale by 0.04 for each disc
-						newScale -= 0.04
 						for i in 1...Int(numSteps) {
 							// decrement degrees by step value
 							startDegrees -= stepDegrees
@@ -153,11 +155,13 @@ class OrbitView: UIView {
 								nextDisc.center = p
 							}
 						}
-						// set the new scale transform
+						// decrease scale by 4.5%, but not less than Zero
+						newScale = max(0.0, newScale - 0.045)
 						nextDisc.transform = CGAffineTransform(scaleX: newScale, y: newScale)
+						// as we move around the circle, the scales will decrease, so
+						//	decrease the distance for each successive disc
+						spacingDegrees *= 0.925
 					})
-					// we're moving around the circle slightly less for each successive disc
-					spacingDegrees *= 0.925
 				}
 				nextIDX += 1
 			}
@@ -167,6 +171,10 @@ class OrbitView: UIView {
 				if b == .end {
 					// set new active disc
 					self.activeDisc = self.discViews[idx - 1]
+					// hide any discs with scale smaller than 0.1 (10%)
+					self.discViews.forEach { v in
+						v.isHidden = v.transform.a < 0.1
+					}
 				}
 			})
 			// start and immediately pause the animation
