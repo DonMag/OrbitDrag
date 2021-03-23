@@ -118,7 +118,7 @@ class BasicOrbitViewController: UIViewController {
 			testView.centerYAnchor.constraint(equalTo: g.centerYAnchor),
 		])
 		
-		testView.numDiscs = 16
+		//testView.numDiscs = 16
 		
 	}
 	
@@ -130,7 +130,7 @@ class ScoreBasedOrbitViewController: UIViewController {
 		super.viewDidLoad()
 		view.backgroundColor = .white
 
-		let testView = ScoringOrbitView()
+		let testView = OrbitView()
 		testView.translatesAutoresizingMaskIntoConstraints = false
 		testView.backgroundColor = .systemGreen
 		view.addSubview(testView)
@@ -173,6 +173,10 @@ class ScoreBasedOrbitViewController: UIViewController {
 			100, 100, 100,
 			100, 100, 100,
 		].reversed()
+		
+		testView.scores = [
+			 5, 6, 9, 4, 7,
+		]
 		
 	}
 	

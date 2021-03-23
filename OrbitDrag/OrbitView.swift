@@ -8,7 +8,7 @@
 import UIKit
 
 class OrbitView: UIView {
-
+	
 	override init(frame: CGRect) {
 		super.init(frame: frame)
 		commonInit()
@@ -18,11 +18,13 @@ class OrbitView: UIView {
 		commonInit()
 	}
 	func commonInit() -> Void {
-		// default number of discs
-		numDiscs = 12
 		// add the pan gesture
 		let panRecognizer = UIPanGestureRecognizer(target:self, action:#selector(detectPan))
 		addGestureRecognizer(panRecognizer)
+		
+		// default of 7 equal scores
+		//	so there is something to see if scores are not set
+		scores = [1, 1, 1, 1, 1, 1, 1]
 	}
 	
 	override func layoutSubviews() {
@@ -32,10 +34,13 @@ class OrbitView: UIView {
 		if bounds.width != thisWidth {
 			thisWidth = bounds.width
 			// assuming we're a 1:1 ratio view
-			//  using "center disc" radius of width * 0.2 will allow all discs to fit
-			centerDiscRadius = bounds.width * 0.2
+			//  using "center disc" width of 30% of the view
+			//	will allow all discs to fit
+			//	so the radius is 0.15
+			centerDiscRadius = bounds.width * 0.15
 			// radius for "orbit" path
-			discPathRadius = centerDiscRadius * 1.75
+			//	provides a little space between the center disc and the surrounding discs
+			orbitPathRadius = centerDiscRadius * 2.15
 			// init all discs at "center disc" size, centered in self
 			discViews.forEach { disc in
 				disc.frame = CGRect(origin: .zero, size: CGSize(width: centerDiscRadius * 2.0, height: centerDiscRadius * 2.0))
@@ -43,20 +48,25 @@ class OrbitView: UIView {
 			}
 		}
 	}
-
-	public var numDiscs: Int = 0 {
+	
+	public var scores: [CGFloat] = [] {
 		didSet {
 			// clear any existing discs
-			subviews.forEach {
+			discViews.forEach {
 				$0.removeFromSuperview()
 			}
 			discViews.removeAll()
+			// make sure scores are in descending order
+			let sortedScores = scores.sorted { $0 > $1 }
+			var i = 1
 			// create new discs
-			for i in 1...numDiscs {
+			sortedScores.forEach { val in
 				let v = DiscView()
-				v.label.text = "\(i)"
+				v.label.text = "\(val)\n\(i)"
+				v.score = val
 				addSubview(v)
 				discViews.append(v)
+				i += 1
 			}
 			guard let v = discViews.last else {
 				fatalError("We didn't add any Discs!")
@@ -67,18 +77,21 @@ class OrbitView: UIView {
 			setNeedsLayout()
 		}
 	}
-
+	
 	// used in layoutSubviews
 	private var thisWidth: CGFloat = 0
 	
-	// scale for disc at 6 o'clock
-	private let firstScale: CGFloat = 0.60
-
 	// "center disc" radius, set in layoutSubviews
 	private var centerDiscRadius: CGFloat = 0
 	
 	// radius for "orbit" path, set in layoutSubviews
-	private var discPathRadius: CGFloat = 0
+	private var orbitPathRadius: CGFloat = 0
+	
+	// distance (in degrees) between discs
+	//	consecutive 100% discs will need 60-degrees
+	//	calculations are made on each disc, so
+	//	use one-half of 60-degrees
+	private let baseDistance: Double = 30
 	
 	// array of "discs"
 	private var discViews: [DiscView] = []
@@ -86,18 +99,21 @@ class OrbitView: UIView {
 	// the disc "on top of the stack" that can be dragged
 	private var activeDisc: DiscView!
 	
+	// used to move/scale discs while dragging
 	private var animator = UIViewPropertyAnimator()
 	
 	// we only want to drag if the touch starts inside the center disc
 	private var isDragging: Bool = false
 	
 	@objc func detectPan(_ recognizer: UIPanGestureRecognizer) {
-		// make sure we're not on the last disc
+		
+		// make sure we're not on the last (bottom) disc
 		guard let idx = discViews.firstIndex(of: activeDisc),
 			  idx > 0
 		else {
 			return
 		}
+		
 		switch recognizer.state {
 		case .began:
 			// make sure the drag starts inside the center disc
@@ -106,10 +122,43 @@ class OrbitView: UIView {
 			if !pth.contains(pt) {
 				return
 			}
+			
+			// get array of "current" discs, this will be:
+			//	the disc "remaining" in the center +
+			//	the disc being dragged +
+			//	any discs that have already been dragged out
+			let curDiscs: [DiscView] = Array(discViews[(idx - 1)..<discViews.count])
+			
+			// get the score of the "remaining" center disc as the
+			//	current MAX score
+			let curMaxScore = curDiscs[0].score
+			
+			// we're starting at 90-degrees (6 o'clock)
+			var d: Double = 90
+			
+			// remaining center disc is 100%
+			curDiscs[0].scorePct = 1
+			
+			// disc being dragged down
+			curDiscs[1].scorePct = curDiscs[1].score / curMaxScore
+			curDiscs[1].nextDegrees = d
+			
+			// for any discs that have already been dragged out
+			for i in 2..<curDiscs.count {
+				// set percentage based on current Max score
+				curDiscs[i].scorePct = curDiscs[i].score / curMaxScore
+				// calculate distance (in degrees) from previous disc
+				let dist: Double = (baseDistance * Double(curDiscs[i].scorePct)) + (baseDistance * Double(curDiscs[i-1].scorePct))
+				// subtract from previous position (in degrees)
+				d -= dist
+				curDiscs[i].nextDegrees = d
+			}
+			
+			// set dragging flag
 			isDragging = true
 			
 			// starting position of disc to drag
-			let startPosY = activeDisc.center.y
+			let startPosY = curDiscs[1].center.y
 			
 			// create new animator
 			animator = UIViewPropertyAnimator(duration: 0.3, curve: .linear)
@@ -117,35 +166,45 @@ class OrbitView: UIView {
 			// we're moving activeDisc only vertically
 			//	and scaling down from 1.0 to first scale size
 			animator.addAnimations {
-				self.activeDisc.center.y = startPosY + self.discPathRadius
-				self.activeDisc.transform = CGAffineTransform(scaleX: self.firstScale, y: self.firstScale)
+				curDiscs[1].center.y = startPosY + self.orbitPathRadius
+				let sc: CGFloat = curDiscs[1].scorePct
+				curDiscs[1].transform = CGAffineTransform(scaleX: sc, y: sc)
 			}
-			// handle discs that have already been dragged off the center
-			var nextIDX = idx + 1
-			// scale for next disc
-			//	this will reduce for each successive disc
-			var newScale: CGFloat = firstScale
-			// degrees to the next disc's final position
-			//	this will reduce for each successive disc
-			var spacingDegrees: Double = 42.0
-			// starting point: 90 degrees
-			var startDegrees: Double = 90.0
+			
+			// starting point
+			var startDegrees: Double = 0
 			// ending point
 			var endDegrees: Double = 0
+			
 			// we need the same number of keyframes as points for the vertical drag
-			let numSteps: CGFloat = discPathRadius
-			while nextIDX < discViews.count {
-				// get the next disc
-				let nextDisc = discViews[nextIDX]
+			let numSteps: CGFloat = orbitPathRadius
+			
+			// handle discs that have already been dragged off the center
+			var nextIDX = 2
+			
+			while nextIDX < curDiscs.count {
+				let nextDisc = curDiscs[nextIDX]
+				
+				// scale based on percent
+				animator.addAnimations {
+					let sc: CGFloat = nextDisc.scorePct
+					nextDisc.transform = CGAffineTransform(scaleX: sc, y: sc)
+				}
+				
+				// to move the discs around the center disc, we
+				//	calculate the same number of points on the orbit path
+				//	as the number of points the "dragging" disc needs to move
+				//	and use Key Frame animation
 				animator.addAnimations {
 					UIView.animateKeyframes(withDuration: 0.3, delay: 0.0, animations: {
-						endDegrees = startDegrees - spacingDegrees
+						startDegrees = nextDisc.currentDegrees
+						endDegrees = nextDisc.nextDegrees
 						let stepDegrees: Double = (startDegrees - endDegrees) / Double(numSteps)
 						for i in 1...Int(numSteps) {
 							// decrement degrees by step value
 							startDegrees -= stepDegrees
 							// get point on discPathRadius circle
-							let p = CGPoint.pointOnCircle(center: self.discViews[0].center, radius: self.discPathRadius, angle: CGFloat(startDegrees.degreesToRadians))
+							let p = CGPoint.pointOnCircle(center: self.discViews[0].center, radius: self.orbitPathRadius, angle: CGFloat(startDegrees.degreesToRadians))
 							// duration is 1 divided by number of steps
 							let duration = 1.0 / Double(numSteps)
 							// start time for this frame is duration * this step
@@ -155,35 +214,36 @@ class OrbitView: UIView {
 								nextDisc.center = p
 							}
 						}
-						// decrease scale by 4.5%, but not less than Zero
-						newScale = max(0.0, newScale - 0.045)
-						nextDisc.transform = CGAffineTransform(scaleX: newScale, y: newScale)
-						// as we move around the circle, the scales will decrease, so
-						//	decrease the distance for each successive disc
-						spacingDegrees *= 0.925
 					})
 				}
+				
 				nextIDX += 1
 			}
-			// add completion block
+			
+			// add a completion block
 			animator.addCompletion({ b in
 				// if we animated forward to the end
 				if b == .end {
 					// set new active disc
-					self.activeDisc = self.discViews[idx - 1]
-					// hide any discs with scale smaller than 0.1 (10%)
-					self.discViews.forEach { v in
-						v.isHidden = v.transform.a < 0.1
+					self.activeDisc = curDiscs[0]	// self.discViews[idx - 1]
+					// hide any discs with scale smaller than 0.01 (1%)
+					//self.discViews.forEach { v in
+					curDiscs.forEach { v in
+						v.isHidden = v.scorePct < 0.01
+						v.currentDegrees = v.nextDegrees
 					}
 				}
 			})
+			
 			// start and immediately pause the animation
 			animator.startAnimation()
 			animator.pauseAnimation()
+			
 		case .changed:
 			// pan gesture changed (touch moved), so
 			//	update the animator progress
-			animator.fractionComplete = recognizer.translation(in: self).y / discPathRadius
+			animator.fractionComplete = recognizer.translation(in: self).y / orbitPathRadius
+			
 		case .ended:
 			// if we dragged down less than 1/3rd of the way (or dragged down and back up)
 			if animator.fractionComplete < 0.333 {
@@ -193,9 +253,12 @@ class OrbitView: UIView {
 			animator.continueAnimation(withTimingParameters: nil, durationFactor: 0)
 			// we're no longer dragging
 			isDragging = false
+			
 		default:
 			()
 		}
+		
 	}
-
+	
 }
+
