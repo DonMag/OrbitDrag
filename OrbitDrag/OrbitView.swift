@@ -19,7 +19,7 @@ class OrbitView: UIView {
 	}
 	func commonInit() -> Void {
 		// add the pan gesture
-		let panRecognizer = UIPanGestureRecognizer(target:self, action:#selector(detectPan))
+		let panRecognizer = UIPanGestureRecognizer(target:self, action:#selector(detectPan(_:)))
 		addGestureRecognizer(panRecognizer)
 		
 		// default of 7 equal scores
@@ -129,73 +129,95 @@ class OrbitView: UIView {
 	// used to move/scale discs while dragging
 	private var animator = UIViewPropertyAnimator()
 	
-	// we only want to drag if the touch starts inside the center disc
-	private var isDragging: Bool = false
+	enum PanDirection {
+		case up, down, undetermined
+	}
+	var panDir: PanDirection = .undetermined
 	
 	@objc func detectPan(_ recognizer: UIPanGestureRecognizer) {
+
+		var idx: Int = 0
 		
-		// make sure we're not on the last (bottom) disc
-		guard let idx = discViews.firstIndex(of: activeDisc),
-			  idx > 0
-		else {
-			return
-		}
+		// make sure we have an active disc
+		guard let i = discViews.firstIndex(of: activeDisc) else { return }
 		
+		idx = i
+
 		switch recognizer.state {
 		case .began:
-			// make sure the drag starts inside the center disc
-			let pth = UIBezierPath(ovalIn: discViews[0].frame)
-			let pt = recognizer.location(in: self)
-			if !pth.contains(pt) {
-				return
+
+			if panDir == .undetermined {
+				// make sure the drag starts inside the center disc
+				let pt = recognizer.location(in: self)
+				var pth = UIBezierPath(ovalIn: activeDisc.frame)
+				// are we dragging from center disc?
+				if pth.contains(pt) && recognizer.translation(in: self).y > 0 {
+					// make sure we're not on the last (bottom) disc
+					if idx == 0 {
+						return
+					}
+					panDir = .down
+				} else if idx < discViews.count - 1 {
+					pth = UIBezierPath(ovalIn: discViews[idx+1].frame)
+					// are we dragging from disc at 90-degrees (6 o'clock)?
+					if pth.contains(pt) && recognizer.translation(in: self).y < 0 {
+						idx += 1
+						panDir = .up
+					}
+				}
 			}
 			
-			// get array of "current" discs, this will be:
-			//	the disc "remaining" in the center +
+			if panDir == .undetermined {
+				return
+			}
+
+			// get array of "current" discs
 			//	the disc being dragged +
 			//	any discs that have already been dragged out
-			let curDiscs: [DiscView] = Array(discViews[(idx - 1)..<discViews.count])
+			//
+			let curDiscs: [DiscView] = Array(discViews[idx..<discViews.count])
 			
-			// get the score of the "remaining" center disc as the
-			//	current MAX score
-			let curMaxScore = curDiscs[0].score
+			var curMaxScore = curDiscs[0].score
+			if panDir == .down {
+				curMaxScore = discViews[idx - 1].score
+			}
 			
 			// we're starting at 90-degrees (6 o'clock)
 			var d: Double = 90
 			
-			// remaining center disc is 100%
-			curDiscs[0].scorePct = 1
-			
-			// disc being dragged down
-			curDiscs[1].scorePct = curDiscs[1].score / curMaxScore
-			curDiscs[1].nextDegrees = d
+			// disc being dragged
+			curDiscs[0].scorePct = curDiscs[0].score / curMaxScore
+			curDiscs[0].nextDegrees = d
 			
 			// for any discs that have already been dragged out
-			for i in 2..<curDiscs.count {
+			for i in 1..<curDiscs.count {
 				// set percentage based on current Max score
 				curDiscs[i].scorePct = curDiscs[i].score / curMaxScore
 				// calculate distance (in degrees) from previous disc
 				let dist: Double = (baseDistance * Double(curDiscs[i].scorePct)) + (baseDistance * Double(curDiscs[i-1].scorePct))
 				// subtract from previous position (in degrees)
-				d -= dist
-				curDiscs[i].nextDegrees = d
+				if panDir == .down {
+					d -= dist
+					curDiscs[i].nextDegrees = d
+				} else {
+					curDiscs[i].nextDegrees = d
+					d -= dist
+				}
 			}
 			
-			// set dragging flag
-			isDragging = true
-			
 			// starting position of disc to drag
-			let startPosY = curDiscs[1].center.y
+			let startPosY = discViews[0].center.y
 			
 			// create new animator
 			animator = UIViewPropertyAnimator(duration: 0.3, curve: .linear)
 			
 			// we're moving activeDisc only vertically
 			//	and scaling down from 1.0 to first scale size
+			//	or up to 1.0 from first scale size
 			animator.addAnimations {
-				curDiscs[1].center.y = startPosY + self.orbitPathRadius
-				let sc: CGFloat = CGFloat(curDiscs[1].scorePct)
-				curDiscs[1].transform = CGAffineTransform(scaleX: sc, y: sc)
+				curDiscs[0].center.y = startPosY + (self.panDir == .down ? self.orbitPathRadius : 0)
+				let sc: CGFloat = CGFloat(curDiscs[0].scorePct)
+				curDiscs[0].transform = CGAffineTransform(scaleX: sc, y: sc)
 			}
 			
 			// starting point
@@ -207,7 +229,7 @@ class OrbitView: UIView {
 			let numSteps: CGFloat = orbitPathRadius
 			
 			// handle discs that have already been dragged off the center
-			var nextIDX = 2
+			var nextIDX = 1
 			
 			while nextIDX < curDiscs.count {
 				let nextDisc = curDiscs[nextIDX]
@@ -252,14 +274,12 @@ class OrbitView: UIView {
 				// if we animated forward to the end
 				if b == .end {
 					// set new active disc
-					self.activeDisc = curDiscs[0]	// self.discViews[idx - 1]
-					// hide any discs with scale smaller than 0.01 (1%)
-					//self.discViews.forEach { v in
+					self.activeDisc = (self.panDir == .down) ? self.discViews[idx - 1] : self.discViews[idx]
 					curDiscs.forEach { v in
-						v.isHidden = v.scorePct < 0.01
 						v.currentDegrees = v.nextDegrees
 					}
 				}
+				self.panDir = .undetermined
 			})
 			
 			// start and immediately pause the animation
@@ -269,20 +289,20 @@ class OrbitView: UIView {
 		case .changed:
 			// pan gesture changed (touch moved), so
 			//	update the animator progress
-			animator.fractionComplete = recognizer.translation(in: self).y / orbitPathRadius
+			var ty = recognizer.translation(in: self).y
+			if panDir == .up {
+				ty = abs(ty)
+			}
+			animator.fractionComplete = ty / orbitPathRadius
 			
-		case .ended:
+		default:
 			// if we dragged down less than 1/3rd of the way (or dragged down and back up)
 			if animator.fractionComplete < 0.333 {
 				// reverse the animation
 				animator.isReversed = true
 			}
 			animator.continueAnimation(withTimingParameters: nil, durationFactor: 0)
-			// we're no longer dragging
-			isDragging = false
 			
-		default:
-			()
 		}
 		
 	}
