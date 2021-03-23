@@ -62,7 +62,7 @@ class ScoreDiscView: UIView {
 		label.translatesAutoresizingMaskIntoConstraints = false
 		label.textColor = .white
 		label.textAlignment = .center
-		label.font = .systemFont(ofSize: 28.0)
+		label.font = .systemFont(ofSize: 18.0)
 		label.numberOfLines = 0
 		addSubview(label)
 		NSLayoutConstraint.activate([
