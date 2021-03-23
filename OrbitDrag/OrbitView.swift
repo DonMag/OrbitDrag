@@ -31,32 +31,53 @@ class OrbitView: UIView {
 		super.layoutSubviews()
 		// only initialize discViews if bounds has changed
 		//	(or when forced by numDiscs being set)
-		if bounds.width != thisWidth {
-			thisWidth = bounds.width
-			// assuming we're a 1:1 ratio view
+		if bounds.size != thisSize {
+			thisSize = bounds.size
+
+			// use a 1:1 ratio frame in the center
+			let thisWidth = min(bounds.width, bounds.height)
 			//  using "center disc" width of 30% of the view
 			//	will allow all discs to fit
 			//	so the radius is 0.15
-			centerDiscRadius = bounds.width * 0.15
+			centerDiscRadius = thisWidth * 0.15
 			// radius for "orbit" path
 			//	provides a little space between the center disc and the surrounding discs
 			orbitPathRadius = centerDiscRadius * 2.15
 			// init all discs at "center disc" size, centered in self
 			discViews.forEach { disc in
+				disc.transform = .identity
 				disc.frame = CGRect(origin: .zero, size: CGSize(width: centerDiscRadius * 2.0, height: centerDiscRadius * 2.0))
 				disc.center = CGPoint(x: bounds.midX, y: bounds.midY)
+			}
+			
+			// size may have changed (perhaps on device rotation)
+			//	if one or more discs has already been pulled down
+			//	update and re-scale the "orbiting" discs
+			if activeDisc != discViews.last {
+				guard let idx = discViews.firstIndex(of: activeDisc)
+				else {
+					return
+				}
+				let curDiscs: [DiscView] = Array(discViews[(idx+1)..<discViews.count])
+				curDiscs.forEach { v in
+					// get point on discPathRadius circle
+					let p = CGPoint.pointOnCircle(center: self.discViews[0].center, radius: self.orbitPathRadius, angle: CGFloat(v.currentDegrees.degreesToRadians))
+					v.center = p
+					let sc: CGFloat = CGFloat(v.scorePct)
+					v.transform = CGAffineTransform(scaleX: sc, y: sc)
+				}
 			}
 		}
 	}
 	
-	public var scores: [Float] = [] {
+	public var scores: [Double] = [] {
 		didSet {
 			// clear any existing discs
 			discViews.forEach {
 				$0.removeFromSuperview()
 			}
 			discViews.removeAll()
-			var tempScores: [Float] = scores
+			var tempScores: [Double] = scores
 			// make sure we have at least 1 score
 			if tempScores.count == 0 {
 				tempScores = [1, 1, 1, 1, 1, 1, 1]
@@ -67,7 +88,8 @@ class OrbitView: UIView {
 			// create new discs
 			sortedScores.forEach { val in
 				let v = DiscView()
-				v.label.text = "\(val)"
+				let m = Metric(name: "", value: val)
+				v.label.text = m.formattedValue
 				v.score = val
 				addSubview(v)
 				discViews.append(v)
@@ -78,14 +100,14 @@ class OrbitView: UIView {
 			}
 			activeDisc = v
 			// trigger layout
-			thisWidth = 0
+			thisSize = .zero
 			setNeedsLayout()
 		}
 	}
 	
 	// used in layoutSubviews
-	private var thisWidth: CGFloat = 0
-	
+	private var thisSize: CGSize = .zero
+
 	// "center disc" radius, set in layoutSubviews
 	private var centerDiscRadius: CGFloat = 0
 	

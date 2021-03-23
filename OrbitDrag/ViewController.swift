@@ -33,10 +33,12 @@ class ViewController: UIViewController {
 		])
 
 		infoLabel.textAlignment = .center
-		infoLabel.text = "Enter scores separated by commas..."
-		
+		infoLabel.numberOfLines = 0
+		infoLabel.text = "Enter scores separated by commas and/or newLines. If left blank, these default scores will be used:\n\n60, 60, 75, 75, 75, 80, 90, 100"
+
 		textView.layer.borderWidth = 1
 		textView.layer.borderColor = UIColor.gray.cgColor
+		textView.font = .systemFont(ofSize: 18)
 		textView.heightAnchor.constraint(equalToConstant: 80.0).isActive = true
 		
 		goButton.backgroundColor = .red
@@ -59,12 +61,15 @@ class ViewController: UIViewController {
 			scores = t
 		}
 		
-		var floatArray: [Float] = []
-		let aTmp = scores.components(separatedBy: ",")
-		aTmp.forEach { v in
-			let vv = v.trimmingCharacters(in: .whitespacesAndNewlines)
-			if let f = Float(vv) {
-				floatArray.append(f)
+		var floatArray: [Double] = []
+		let linesArray = scores.components(separatedBy: "\n")
+		linesArray.forEach { line in
+			let aTmp = line.components(separatedBy: ",")
+			aTmp.forEach { v in
+				let vv = v.trimmingCharacters(in: .whitespacesAndNewlines)
+				if let f = Double(vv) {
+					floatArray.append(f)
+				}
 			}
 		}
 
@@ -85,7 +90,8 @@ class ViewController: UIViewController {
 	override func viewDidAppear(_ animated: Bool) {
 		super.viewDidAppear(animated)
 		if isFirstTime {
-			let vc = UIAlertController(title: "Please Note!", message: "This is EXAMPLE code only! It should not be considered \"production ready.\"", preferredStyle: .alert)
+			isFirstTime = false
+			let vc = UIAlertController(title: "Please Note!", message: "\nThis is EXAMPLE code only!\n\nIt should not be considered\n\n\"Production Ready\"", preferredStyle: .alert)
 			vc.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
 			present(vc, animated: true, completion: nil)
 		}
