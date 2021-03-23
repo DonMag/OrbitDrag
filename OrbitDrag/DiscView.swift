@@ -9,8 +9,8 @@ import UIKit
 
 class DiscView: UIView {
 	
-	var score: CGFloat = 0
-	var scorePct: CGFloat = 0
+	var score: Float = 0
+	var scorePct: Float = 0
 	var currentDegrees: Double = 90
 	var nextDegrees: Double = 90
 

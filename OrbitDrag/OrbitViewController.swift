@@ -9,42 +9,50 @@ import UIKit
 
 class OrbitViewController: UIViewController {
 
-	var theScores: String = "" {
-		didSet {
-			let aTmp = theScores.components(separatedBy: ",")
-			aTmp.forEach { v in
-				if let f = Float(v) {
-					scoresArray.append(f)
-				}
-			}
-		}
-	}
-	
-	private var scoresArray: [Float] = []
+	var scoresArray: [Float] = []
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		view.backgroundColor = .white
-		
-		let testView = OrbitView()
-		testView.translatesAutoresizingMaskIntoConstraints = false
-		testView.backgroundColor = .systemGreen
-		view.addSubview(testView)
+
+		let testOrbitView = OrbitView()
+		testOrbitView.translatesAutoresizingMaskIntoConstraints = false
+		testOrbitView.backgroundColor = .systemGreen
+		view.addSubview(testOrbitView)
+
 		let g = view.safeAreaLayoutGuide
-		NSLayoutConstraint.activate([
-			testView.leadingAnchor.constraint(equalTo: g.leadingAnchor, constant: 20.0),
-			testView.trailingAnchor.constraint(equalTo: g.trailingAnchor, constant: -20.0),
-			testView.heightAnchor.constraint(equalTo: testView.widthAnchor),
-			testView.centerYAnchor.constraint(equalTo: g.centerYAnchor),
-		])
 		
-		testView.scores = [
-			30, 30, 30,
-			50, 50, 50,
-			60, 60,
-			80, 90,
-			100,
-		].reversed()
+		var c: NSLayoutConstraint!
+		
+		// constrain view as large as possible with 20-pts on all sides
+		//	while keeping it square (1:1 ratio), centered in view
+		c = testOrbitView.topAnchor.constraint(equalTo: g.topAnchor, constant: 20.0)
+		c.priority = .defaultHigh
+		c.isActive = true
+		
+		c = testOrbitView.leadingAnchor.constraint(equalTo: g.leadingAnchor, constant: 20.0)
+		c.priority = .defaultHigh
+		c.isActive = true
+		
+		c = testOrbitView.trailingAnchor.constraint(equalTo: g.trailingAnchor, constant: -20.0)
+		c.priority = .defaultHigh
+		c.isActive = true
+		
+		c = testOrbitView.bottomAnchor.constraint(equalTo: g.bottomAnchor, constant: -20.0)
+		c.priority = .defaultHigh
+		c.isActive = true
+		
+		NSLayoutConstraint.activate([
+			testOrbitView.topAnchor.constraint(greaterThanOrEqualTo: g.topAnchor, constant: 20.0),
+			testOrbitView.leadingAnchor.constraint(greaterThanOrEqualTo: g.leadingAnchor, constant: 20.0),
+			testOrbitView.trailingAnchor.constraint(lessThanOrEqualTo: g.trailingAnchor, constant: -20.0),
+			testOrbitView.bottomAnchor.constraint(lessThanOrEqualTo: g.bottomAnchor, constant: -20.0),
+			testOrbitView.centerXAnchor.constraint(equalTo: g.centerXAnchor),
+			testOrbitView.centerYAnchor.constraint(equalTo: g.centerYAnchor),
+			testOrbitView.widthAnchor.constraint(equalTo: testOrbitView.heightAnchor),
+		])
+
+		testOrbitView.scores = scoresArray
 		
     }
     

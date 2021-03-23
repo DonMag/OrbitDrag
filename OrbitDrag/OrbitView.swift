@@ -49,20 +49,25 @@ class OrbitView: UIView {
 		}
 	}
 	
-	public var scores: [CGFloat] = [] {
+	public var scores: [Float] = [] {
 		didSet {
 			// clear any existing discs
 			discViews.forEach {
 				$0.removeFromSuperview()
 			}
 			discViews.removeAll()
+			var tempScores: [Float] = scores
+			// make sure we have at least 1 score
+			if tempScores.count == 0 {
+				tempScores = [1, 1, 1, 1, 1, 1, 1]
+			}
 			// make sure scores are in descending order
 			let sortedScores = scores.sorted { $0 > $1 }
 			var i = 1
 			// create new discs
 			sortedScores.forEach { val in
 				let v = DiscView()
-				v.label.text = "\(val)\n\(i)"
+				v.label.text = "\(val)"
 				v.score = val
 				addSubview(v)
 				discViews.append(v)
@@ -167,7 +172,7 @@ class OrbitView: UIView {
 			//	and scaling down from 1.0 to first scale size
 			animator.addAnimations {
 				curDiscs[1].center.y = startPosY + self.orbitPathRadius
-				let sc: CGFloat = curDiscs[1].scorePct
+				let sc: CGFloat = CGFloat(curDiscs[1].scorePct)
 				curDiscs[1].transform = CGAffineTransform(scaleX: sc, y: sc)
 			}
 			
@@ -187,7 +192,7 @@ class OrbitView: UIView {
 				
 				// scale based on percent
 				animator.addAnimations {
-					let sc: CGFloat = nextDisc.scorePct
+					let sc: CGFloat = CGFloat(nextDisc.scorePct)
 					nextDisc.transform = CGAffineTransform(scaleX: sc, y: sc)
 				}
 				

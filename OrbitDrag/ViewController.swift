@@ -9,176 +9,86 @@ import UIKit
 
 class ViewController: UIViewController {
 
+	let infoLabel = UILabel()
+	let textView = UITextView()
+	let goButton = UIButton()
+	
+	let defaultScores = "60, 60, 75, 75, 75, 80, 90, 100"
+	
 	override func viewDidLoad() {
 		super.viewDidLoad()
 
 		let stack = UIStackView()
 		stack.axis = .vertical
-		stack.spacing = 20
+		stack.spacing = 8
 
 		stack.translatesAutoresizingMaskIntoConstraints = false
 		view.addSubview(stack)
 
 		let g = view.safeAreaLayoutGuide
 		NSLayoutConstraint.activate([
-			stack.leadingAnchor.constraint(equalTo: g.leadingAnchor, constant: 40.0),
-			stack.trailingAnchor.constraint(equalTo: g.trailingAnchor, constant: -40.0),
-			stack.centerYAnchor.constraint(equalTo: g.centerYAnchor),
+			stack.topAnchor.constraint(equalTo: g.topAnchor, constant: 40.0),
+			stack.widthAnchor.constraint(equalToConstant: 300.0),
+			stack.centerXAnchor.constraint(equalTo: g.centerXAnchor),
 		])
 
-		["Basic", "Score Based"].forEach { s in
-			let b = UIButton()
-			b.backgroundColor = .red
-			b.setTitle(s, for: [])
-			b.setTitleColor(.white, for: .normal)
-			b.setTitleColor(.lightGray, for: .highlighted)
-			b.addTarget(self, action: #selector(showOrbitVC(_:)), for: .touchUpInside)
-			stack.addArrangedSubview(b)
-		}
+		infoLabel.textAlignment = .center
+		infoLabel.text = "Enter scores separated by commas..."
 		
+		textView.layer.borderWidth = 1
+		textView.layer.borderColor = UIColor.gray.cgColor
+		textView.heightAnchor.constraint(equalToConstant: 80.0).isActive = true
+		
+		goButton.backgroundColor = .red
+		goButton.setTitle("Go!", for: [])
+		goButton.setTitleColor(.white, for: .normal)
+		goButton.setTitleColor(.lightGray, for: .highlighted)
+		goButton.addTarget(self, action: #selector(showOrbitVC(_:)), for: .touchUpInside)
+		
+		stack.addArrangedSubview(infoLabel)
+		stack.addArrangedSubview(textView)
+		stack.addArrangedSubview(goButton)
+
 	}
 	
 	@objc func showOrbitVC(_ sender: UIButton) -> Void {
-		guard let t = sender.currentTitle else {
+
+		view.endEditing(true)
+		var scores = defaultScores
+		if let t = textView.text, t.count > 0 {
+			scores = t
+		}
+		
+		var floatArray: [Float] = []
+		let aTmp = scores.components(separatedBy: ",")
+		aTmp.forEach { v in
+			let vv = v.trimmingCharacters(in: .whitespacesAndNewlines)
+			if let f = Float(vv) {
+				floatArray.append(f)
+			}
+		}
+
+		if floatArray.count == 0 {
+			let vc = UIAlertController(title: "Error", message: "Could not parse scores!", preferredStyle: .alert)
+			vc.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+			present(vc, animated: true, completion: nil)
 			return
 		}
-		if t == "Basic" {
-			let vc = BasicOrbitViewController()
-			navigationController?.pushViewController(vc, animated: true)
-		} else {
-			let vc = ScoreBasedOrbitViewController()
-			navigationController?.pushViewController(vc, animated: true)
+		
+		let vc = OrbitViewController()
+		vc.scoresArray = floatArray
+		navigationController?.pushViewController(vc, animated: true)
+
+	}
+
+	var isFirstTime: Bool = true
+	override func viewDidAppear(_ animated: Bool) {
+		super.viewDidAppear(animated)
+		if isFirstTime {
+			let vc = UIAlertController(title: "Please Note!", message: "This is EXAMPLE code only! It should not be considered \"production ready.\"", preferredStyle: .alert)
+			vc.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+			present(vc, animated: true, completion: nil)
 		}
 	}
-
-//
-//	override func viewDidLoad() {
-//		super.viewDidLoad()
-//
-//		let testView = OrbitView()
-//		testView.translatesAutoresizingMaskIntoConstraints = false
-//		testView.backgroundColor = .systemGreen
-//		view.addSubview(testView)
-//		let g = view.safeAreaLayoutGuide
-//		NSLayoutConstraint.activate([
-//			testView.leadingAnchor.constraint(equalTo: g.leadingAnchor, constant: 20.0),
-//			testView.trailingAnchor.constraint(equalTo: g.trailingAnchor, constant: -20.0),
-//			testView.heightAnchor.constraint(equalTo: testView.widthAnchor),
-//			testView.centerYAnchor.constraint(equalTo: g.centerYAnchor),
-//		])
-//
-//		testView.numDiscs = 16
-//
-//	}
-
-	/*
-	override func viewDidLoad() {
-		super.viewDidLoad()
-		
-		let testView = ScoringOrbitView()
-		testView.translatesAutoresizingMaskIntoConstraints = false
-		testView.backgroundColor = .systemGreen
-		view.addSubview(testView)
-		let g = view.safeAreaLayoutGuide
-		NSLayoutConstraint.activate([
-			testView.leadingAnchor.constraint(equalTo: g.leadingAnchor, constant: 20.0),
-			testView.trailingAnchor.constraint(equalTo: g.trailingAnchor, constant: -20.0),
-			testView.heightAnchor.constraint(equalTo: testView.widthAnchor),
-			testView.centerYAnchor.constraint(equalTo: g.centerYAnchor),
-		])
-		
-		testView.scores = [
-			30, 30, 30,
-			50, 50, 50,
-			60, 60,
-			80, 90,
-			100,
-		].reversed()
-		
-	}
-	*/
-	
-}
-
-class BasicOrbitViewController: UIViewController {
-	
-	override func viewDidLoad() {
-		super.viewDidLoad()
-		view.backgroundColor = .white
-		
-		let testView = OrbitView()
-		testView.translatesAutoresizingMaskIntoConstraints = false
-		testView.backgroundColor = .systemGreen
-		view.addSubview(testView)
-		let g = view.safeAreaLayoutGuide
-		NSLayoutConstraint.activate([
-			testView.leadingAnchor.constraint(equalTo: g.leadingAnchor, constant: 20.0),
-			testView.trailingAnchor.constraint(equalTo: g.trailingAnchor, constant: -20.0),
-			testView.heightAnchor.constraint(equalTo: testView.widthAnchor),
-			testView.centerYAnchor.constraint(equalTo: g.centerYAnchor),
-		])
-		
-		//testView.numDiscs = 16
-		
-	}
-	
-}
-
-class ScoreBasedOrbitViewController: UIViewController {
-	
-	override func viewDidLoad() {
-		super.viewDidLoad()
-		view.backgroundColor = .white
-
-		let testView = OrbitView()
-		testView.translatesAutoresizingMaskIntoConstraints = false
-		testView.backgroundColor = .systemGreen
-		view.addSubview(testView)
-		let g = view.safeAreaLayoutGuide
-		NSLayoutConstraint.activate([
-			testView.leadingAnchor.constraint(equalTo: g.leadingAnchor, constant: 20.0),
-			testView.trailingAnchor.constraint(equalTo: g.trailingAnchor, constant: -20.0),
-			testView.heightAnchor.constraint(equalTo: testView.widthAnchor),
-			testView.centerYAnchor.constraint(equalTo: g.centerYAnchor),
-		])
-		
-		testView.scores = [
-			30, 30, 30,
-			50, 50, 50,
-			60, 60,
-			80, 90,
-			100,
-		].reversed()
-		
-		testView.scores = [
-			20, 40, 50,
-			60, 70, 80,
-			90, 100,
-		].reversed()
-		
-		testView.scores = [
-			50, 60, 70,
-			75, 80, 85,
-			90, 95, 100,
-		].reversed()
-		
-		testView.scores = [
-			50, 50, 50,
-			60, 80, 90,
-			90, 90, 100,
-		].reversed()
-		
-		testView.scores = [
-			100, 100, 100,
-			100, 100, 100,
-			100, 100, 100,
-		].reversed()
-		
-		testView.scores = [
-			 5, 6, 9, 4, 7,
-		]
-		
-	}
-	
 }
 
