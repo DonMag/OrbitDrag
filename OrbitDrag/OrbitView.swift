@@ -146,24 +146,23 @@ class OrbitView: UIView {
 		switch recognizer.state {
 		case .began:
 
-			if panDir == .undetermined {
-				// make sure the drag starts inside the center disc
-				let pt = recognizer.location(in: self)
-				var pth = UIBezierPath(ovalIn: activeDisc.frame)
-				// are we dragging from center disc?
-				if pth.contains(pt) && recognizer.translation(in: self).y > 0 {
-					// make sure we're not on the last (bottom) disc
-					if idx == 0 {
-						return
-					}
+			panDir = .undetermined
+			
+			// make sure the drag starts inside the center disc
+			let pt = recognizer.location(in: self)
+			var pth = UIBezierPath(ovalIn: activeDisc.frame)
+			// are we dragging from center disc?
+			if pth.contains(pt) {
+				// make sure we're not on the last (bottom) disc
+				if idx > 0 {
 					panDir = .down
-				} else if idx < discViews.count - 1 {
-					pth = UIBezierPath(ovalIn: discViews[idx+1].frame)
-					// are we dragging from disc at 90-degrees (6 o'clock)?
-					if pth.contains(pt) && recognizer.translation(in: self).y < 0 {
-						idx += 1
-						panDir = .up
-					}
+				}
+			} else if idx < discViews.count - 1 {
+				pth = UIBezierPath(ovalIn: discViews[idx+1].frame)
+				// are we dragging from disc at 90-degrees (6 o'clock)?
+				if pth.contains(pt) {
+					idx += 1
+					panDir = .up
 				}
 			}
 			
@@ -279,7 +278,6 @@ class OrbitView: UIView {
 						v.currentDegrees = v.nextDegrees
 					}
 				}
-				self.panDir = .undetermined
 			})
 			
 			// start and immediately pause the animation
@@ -291,7 +289,8 @@ class OrbitView: UIView {
 			//	update the animator progress
 			var ty = recognizer.translation(in: self).y
 			if panDir == .up {
-				ty = abs(ty)
+				// if dragging up, we can only use negative y movement
+				ty = abs(min(0, ty))
 			}
 			animator.fractionComplete = ty / orbitPathRadius
 			
